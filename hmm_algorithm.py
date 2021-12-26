@@ -252,6 +252,8 @@ write_EmissionProbs_file()
 
 write_InitialProbs_file()
 
+# TODO: 3) Test Kümesinin HMM kullanılarak POSTaglerin bulunması ve elde edilen sonuçların kütüğe yazılması.
+
 print('Done')
 
 # """                                                              
