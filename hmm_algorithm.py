@@ -1,7 +1,38 @@
 #%%
-import sys
+#
+# This code was written by 
+# Ozan Koyuk - N20230337
+# for VBM682 Natural Language Processing course.
+# Source : https://github.com/ozankoyuk/vbm682
+#
+#####################################
+#       BEFORE RUNNING THE CODE     #
+#####################################
+#
+# You can remove comments for the calling functions starts with 'TEST_'
+# They are just identical with the functions doesn't start with 'TEST_'
+#
+# In short, following functions MUST executed to get results:
+#   read_and_fill_everything()
+#   write_PosTags_file()
+#   write_TransitionProbs_file()
+#   write_Vocabulary_file()
+#   write_EmissionProbs_file()
+#   write_InitialProbs_file()
+#   TEST_read_and_fill_everything()
+#
+# If you want to see results for 'Test' files
+# you can remove comments for the following functions.
+# These functions are NOT necessary to get required results,
+# They are just to get more details :
+#   TEST_write_PosTags_file()
+#   TEST_write_TransitionProbs_file()
+#   TEST_write_Vocabulary_file()
+#   TEST_write_EmissionProbs_file()
+#   TEST_write_InitialProbs_file()
+
+
 import os
-# improves printing tables on console
 from tabulate import tabulate 
 
 all_transitions = {}
@@ -27,6 +58,7 @@ def read_and_fill_everything():
     # words_list = [ ...,  ["'/'", 'back/rb-hl', 'with/in-hl', 'the/at-hl', 'met/np-hl'], ....]
     for line in words_list:
         _temp_previous_tag = 'Q0'
+        # TODO: check this line
         tag = ''
         for words in line:
             word = words.split("/")[0]
@@ -92,6 +124,7 @@ def read_and_fill_everything():
                 comparison_for_word_tag[word]['predicted'].append(
                     tag
                 )
+
 def write_PosTags_file():
     pos_tags_file = open('PosTags.txt', 'w+')
     pos_tags_tabulate = []
@@ -135,7 +168,8 @@ def write_TransitionProbs_file():
 
             # if this is the first tag, then we add the 'Begin' tag to show it
             if _previous_tag == 'Q0':
-                _prob = round(all_transition_probabilities[_transition_key], 9)
+                print(_previous_tag)
+                _prob = round(all_transition_probabilities[_transition_key], 6)
                 transition_probability_tabulate.append([
                     'Begin', _next_tag, _prob
                 ])
@@ -144,7 +178,7 @@ def write_TransitionProbs_file():
                 ])
             else:
                 # if there is another tag before current one
-                _prob = round(all_transition_probabilities[_transition_key], 9)
+                _prob = round(all_transition_probabilities[_transition_key], 6)
                 transition_probability_tabulate.append([
                     _previous_tag, _next_tag, _prob
                 ])
@@ -246,23 +280,17 @@ def write_InitialProbs_file():
     )
     # InitialProbs.txt filled
 
-
 read_and_fill_everything()
 
-# write_PosTags_file()
+write_PosTags_file()
 
-# write_TransitionProbs_file()
+write_TransitionProbs_file()
 
-# write_Vocabulary_file()
+write_Vocabulary_file()
 
-# write_EmissionProbs_file()
+write_EmissionProbs_file()
 
-# write_InitialProbs_file()
-
-# TODO: 3) Test Kümesinin HMM kullanılarak POSTaglerin bulunması ve elde edilen sonuçların kütüğe yazılması.
-
-
-
+write_InitialProbs_file()
 
 TEST_all_transitions = {}
 TEST_all_transition_probabilities = {}
@@ -514,7 +542,7 @@ TEST_read_and_fill_everything()
 
 # TEST_write_TransitionProbs_file()
 
-TEST_write_Vocabulary_file()
+# TEST_write_Vocabulary_file()
 
 # TEST_write_EmissionProbs_file()
 
@@ -526,10 +554,28 @@ ca_file = open(f"./Test/ca41", 'r')
 ca_lines = []
 ca_words = {}
 ca_words_count = 0
+ca_unique_words = []
+ca_update_to_sonuc_file = ""
 
 for lines in ca_file:
     ca_lines.append([l.lower() for l in lines.split()])
 ca_file.close()
+
+# TRAIN dict
+for word in comparison_for_word_tag.keys():
+    # find the most occurence of the tag
+    comparison_for_word_tag[word]['predicted'] = max(
+        set(comparison_for_word_tag[word]['predicted']),
+        key=comparison_for_word_tag[word]['predicted'].count
+    )
+
+# TEST dict
+for word in TEST_comparison_for_word_tag.keys():
+    # find the most occurence of the tag
+    TEST_comparison_for_word_tag[word]['true'] = max(
+        set(TEST_comparison_for_word_tag[word]['true']),
+        key=TEST_comparison_for_word_tag[word]['true'].count
+    )
 
 for line in ca_lines:
     for words in line:
@@ -541,28 +587,23 @@ for line in ca_lines:
             ca_words[word] = {
                 'tags': [tag]
             }
+            ca_unique_words.append(word)
         else:
             ca_words[word]['tags'].append(tag)
+        
+        # prepare <word>/<predicted_tag> for Sonuc.txt
+        if word in comparison_for_word_tag:
+            ca_update_to_sonuc_file += " " + word + '/' + comparison_for_word_tag[word]['predicted']
+        else:
+            ca_update_to_sonuc_file += " " + word + '/' + TEST_comparison_for_word_tag[word]['true']
+
+    ca_update_to_sonuc_file += "\n"
 
 for word in ca_words.keys():
     # find the most occurence of the tag
     ca_words[word] = max(
         set(ca_words[word]['tags']),
         key=ca_words[word]['tags'].count
-    )
-
-for word in comparison_for_word_tag.keys():
-    # find the most occurence of the tag
-    comparison_for_word_tag[word]['predicted'] = max(
-        set(comparison_for_word_tag[word]['predicted']),
-        key=comparison_for_word_tag[word]['predicted'].count
-    )
-
-for word in TEST_comparison_for_word_tag.keys():
-    # find the most occurence of the tag
-    TEST_comparison_for_word_tag[word]['true'] = max(
-        set(TEST_comparison_for_word_tag[word]['true']),
-        key=TEST_comparison_for_word_tag[word]['true'].count
     )
 
 # intersection of TRAIN and TEST tags
@@ -589,11 +630,8 @@ for word in intersection_words:
         same_tag[word] = test_word_tag
 
 # calcualte % of success
-same_rate = len(same_tag)/(len(same_tag)+len(diff_tag))
-diff_rate = len(diff_tag)/(len(same_tag)+len(diff_tag))
-
-print(f"Same Tag Count : {len(same_tag)} | Success Rate : {same_rate}")
-print(f"Diff Tag Count : {len(diff_tag)} | Success Rate : {diff_rate}")
+same_rate = round(len(same_tag)/(len(same_tag)+len(diff_tag)), 2)*100
+diff_rate = round(len(diff_tag)/(len(same_tag)+len(diff_tag)), 2)*100
 
 # find intersection of ca41 tags and TRAIN tags
 ca_intersection_words = [
@@ -622,47 +660,87 @@ for word in ca_intersection_words:
     else:
         ca_file_same_tag[word] = test_word_tag
 
-ca_file_same_rate = round(len(ca_file_same_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)), 3)
-ca_file_diff_rate = round(len(ca_file_diff_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)), 3)
+ca_file_same_rate = round(len(ca_file_same_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)), 2)*100
+ca_file_diff_rate = round(len(ca_file_diff_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)), 2)*100
 
-print(f"Same Tag Count of CA41 : {len(ca_file_same_tag)} | Success Rate : {ca_file_same_rate}")
-print(f"Diff Tag Count of CA41 : {len(ca_file_diff_tag)} | Success Rate : {ca_file_diff_rate}")
+TEST_word_count = 0
+# find total word count from the data filled while parsing words
+for w, n in TEST_all_words.items():
+    TEST_word_count += n
 
 
+# fill the Sonuc.txt file
 sonuc_file = open('Sonuc.txt', 'w+')
-# total words count in the ca41 file
-sonuc_file.write(sonuc_file_first_line)
-sonuc_file.write("---------------------------------------\n")
 
-# correct and incorrect POSTag counts
+tabulate_sonuc_part1 = [
+    ['Toplam Kelime Sayisi', TEST_word_count],
+    ['Tekil Kelime Sayisi', len(TEST_all_unique_words)],
+    ["", ""],
+    ['Dogru POSTag Sayisi', len(same_tag)],
+    ['Dogru POSTag Orani', f"%{same_rate}"],
+    ["", ""],
+    ['Yanlis POSTag Sayisi', len(diff_tag)],
+    ['Yanlis POSTag Orani', f"{diff_rate}"],
+]
+
 sonuc_file.write(
-    f"Dogru POSTag Sayisi  : {len(ca_file_same_tag)}\n"
-    f"Dogru POSTag Orani   : {ca_file_same_rate}\n\n"
-    f"Yanlis POSTag Sayisi : {len(ca_file_diff_tag)}\n"
-    f"Yanlis POSTag Orani  : {ca_file_diff_rate}\n"
+    f"-----------------------------\n"
+    f"...:: TEST KUMESI  ICIN ::...\n"
+    f"-----------------------------\n"
 )
-sonuc_file.write("---------------------------------------\n")
+
 print(
-    tabulate(
-        _TEST_initial_probs_list,
-        headers=['Tag', 'P(Tag|<s>)']
-    ),
-    file=TEST_initial_probability_file
+    tabulate(tabulate_sonuc_part1, headers=['Nitelik', 'Deger']),
+    file=sonuc_file
+    )
+sonuc_file.write("-----------------------------\n\n")
+
+# Part for -> 'Test dizinindeki ca41 kutugu sonuclari'
+tabulate_sonuc_part2 = [
+    ['Toplam Kelime Sayisi', ca_words_count],
+    ['Tekil Kelime Sayisi', len(ca_unique_words)],
+    ["", ""],
+    ['Dogru POSTag Sayisi', len(ca_file_same_tag)],
+    ['Dogru POSTag Orani', f"%{ca_file_same_rate}"],
+    ["", ""],
+    ['Yanlis POSTag Sayisi', len(ca_file_diff_tag)],
+    ['Yanlis POSTag Orani', f"%{ca_file_diff_rate}"],
+]
+
+sonuc_file.write(
+    f"-----------------------------\n"
+    f"...:: ca41 DOSYASINDAKI ::...\n"
+    f"-----------------------------\n"
 )
+print(
+    tabulate(tabulate_sonuc_part2, headers=['Nitelik', 'Deger']),
+    file=sonuc_file
+    )
+sonuc_file.write("-----------------------------\n\n")
 
+# re-write ca41 with predicted tags 
+sonuc_file.write(ca_update_to_sonuc_file)
 
-print('Done')
+print("Train-Test comparison for ALL data")
+print(f"Same Tag Count : {len(same_tag)} | Success Rate : %{same_rate}")
+print(f"Diff Tag Count : {len(diff_tag)} | Success Rate : %{diff_rate}\n")
 
-# """                                                              
-#   ___                   _  __                 _    
-#  / _ \ ______ _ _ __   | |/ /___  _   _ _   _| | __
-# | | | |_  / _` | '_ \  | ' // _ \| | | | | | | |/ /
-# | |_| |/ / (_| | | | | | . \ (_) | |_| | |_| |   < 
-#  \___//___\__,_|_| |_| |_|\_\___/ \__, |\__,_|_|\_\
-#                                   |___/            
-#  _   _   ____     ___    ____    _____    ___    _____   _____   _____ 
-# | \ | | |___ \   / _ \  |___ \  |___ /   / _ \  |___ /  |___ /  |___  |
-# |  \| |   __) | | | | |   __) |   |_ \  | | | |   |_ \    |_ \     / / 
-# | |\  |  / __/  | |_| |  / __/   ___) | | |_| |  ___) |  ___) |   / /  
-# |_| \_| |_____|  \___/  |_____| |____/   \___/  |____/  |____/   /_/                                           
-# """
+print("Train-Test comparison for ca41 file")
+print(f"Same Tag Count of CA41 : {len(ca_file_same_tag)} | Success Rate : %{ca_file_same_rate}")
+print(f"Diff Tag Count of CA41 : {len(ca_file_diff_tag)} | Success Rate : %{ca_file_diff_rate}")
+
+print('Completed Successfully')
+
+# """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" #                                                            
+#   ___                   _  __                 _                           #
+#  / _ \ ______ _ _ __   | |/ /___  _   _ _   _| | __                       #
+# | | | |_  / _` | '_ \  | ' // _ \| | | | | | | |/ /                       #
+# | |_| |/ / (_| | | | | | . \ (_) | |_| | |_| |   <                        #
+#  \___//___\__,_|_| |_| |_|\_\___/ \__, |\__,_|_|\_\                       #
+#                                   |___/                                   #
+#  _   _   ____     ___    ____    _____    ___    _____   _____   _____    #
+# | \ | | |___ \   / _ \  |___ \  |___ /   / _ \  |___ /  |___ /  |___  |   #
+# |  \| |   __) | | | | |   __) |   |_ \  | | | |   |_ \    |_ \     / /    #
+# | |\  |  / __/  | |_| |  / __/   ___) | | |_| |  ___) |  ___) |   / /     #
+# |_| \_| |_____|  \___/  |_____| |____/   \___/  |____/  |____/   /_/      #                                    
+# """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" #
