@@ -507,7 +507,6 @@ def TEST_write_InitialProbs_file():
     )
     # InitialProbs.txt filled
 
-
 TEST_read_and_fill_everything()
 
 # TEST_write_PosTags_file()
@@ -520,18 +519,52 @@ TEST_read_and_fill_everything()
 
 # TEST_write_InitialProbs_file()
 
+
+# After this line, Question 3 - Part 3 starts
+ca_file = open(f"./Test/ca41", 'r')
+ca_lines = []
+ca_words = {}
+ca_words_count = 0
+
+for lines in ca_file:
+    ca_lines.append([l.lower() for l in lines.split()])
+ca_file.close()
+
+for line in ca_lines:
+    for words in line:
+        word = words.split("/")[0]
+        tag = words.split("/")[1]
+        ca_words_count += 1
+
+        if word not in ca_words:
+            ca_words[word] = {
+                'tags': [tag]
+            }
+        else:
+            ca_words[word]['tags'].append(tag)
+
+for word in ca_words.keys():
+    # find the most occurence of the tag
+    ca_words[word] = max(
+        set(ca_words[word]['tags']),
+        key=ca_words[word]['tags'].count
+    )
+
 for word in comparison_for_word_tag.keys():
+    # find the most occurence of the tag
     comparison_for_word_tag[word]['predicted'] = max(
         set(comparison_for_word_tag[word]['predicted']),
         key=comparison_for_word_tag[word]['predicted'].count
     )
 
 for word in TEST_comparison_for_word_tag.keys():
+    # find the most occurence of the tag
     TEST_comparison_for_word_tag[word]['true'] = max(
         set(TEST_comparison_for_word_tag[word]['true']),
         key=TEST_comparison_for_word_tag[word]['true'].count
     )
 
+# intersection of TRAIN and TEST tags
 intersection_words = [
     value
     for value in comparison_for_word_tag.keys() 
@@ -541,11 +574,41 @@ intersection_words = [
 same_tag = {}
 diff_tag = {}
 
+# find same tags with TRAIN and TEST
 for word in intersection_words:
     trained_word_tag = comparison_for_word_tag[word]['predicted']
     test_word_tag = TEST_comparison_for_word_tag[word]['true']
+
     if trained_word_tag != test_word_tag:
         diff_tag[word] = {
+            'true': test_word_tag,
+            'predicted': trained_word_tag
+        }
+    else:
+        same_tag[word] = test_word_tag
+
+# calcualte % of success
+same_rate = len(same_tag)/(len(same_tag)+len(diff_tag))
+diff_rate = len(diff_tag)/(len(same_tag)+len(diff_tag))
+
+print('Same : ', len(same_tag), same_rate)
+print('Diff : ', len(diff_tag), diff_rate)
+
+
+ca_intersection_words = [
+    word
+    for word in ca_words.keys()
+    if word in comparison_for_word_tag.keys()
+]
+
+ca_file_same_tag = {}
+ca_file_diff_tag = {}
+
+for word in ca_intersection_words:
+    trained_word_tag = comparison_for_word_tag[word]['predicted']
+    test_word_tag = ca_words[word]
+    if trained_word_tag != test_word_tag:
+        ca_file_diff_tag[word] = {
             'true': test_word_tag,
             'predicted': trained_word_tag
         }
@@ -554,10 +617,11 @@ for word in intersection_words:
             f"\n***********************************************"
         )
     else:
-        same_tag[word] = test_word_tag
+        ca_file_same_tag[word] = test_word_tag
 
-print('Same : ', len(same_tag))
-print('Diff : ', len(diff_tag))
+print('Same : ', len(ca_file_same_tag), len(ca_file_same_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)))
+print('Diff : ', len(ca_file_diff_tag), len(ca_file_diff_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)))
+
 
 
 
