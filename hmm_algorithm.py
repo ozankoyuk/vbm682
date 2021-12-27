@@ -276,6 +276,7 @@ TEST_all_words = {}
 TEST_all_unique_words = []
 TEST_initial_probs_list = []
 TEST_comparison_for_word_tag = {}
+sonuc_file_first_line = ""
 
 def TEST_read_and_fill_everything():
     for file in os.listdir("./Test/"):
@@ -431,9 +432,9 @@ def TEST_write_Vocabulary_file():
 
     TEST_vocabulary_freq_list = []
     TEST_vocabulary_file = open('Test_Vocabulary.txt', 'w+')
-    TEST_vocabulary_file.write(
-        f"Toplam kelime sayısı: {total_word_count}\nTekil kelime sayısı: {len(TEST_all_unique_words)}\n\n"
-        )
+    sonuc_file_first_line = f"Toplam kelime sayısı: {total_word_count}\nTekil kelime sayısı: {len(TEST_all_unique_words)}\n"
+
+    TEST_vocabulary_file.write(sonuc_file_first_line + '\n')
 
     # find most likely ones
     for word in TEST_most_likely.keys():
@@ -513,7 +514,7 @@ TEST_read_and_fill_everything()
 
 # TEST_write_TransitionProbs_file()
 
-# TEST_write_Vocabulary_file()
+TEST_write_Vocabulary_file()
 
 # TEST_write_EmissionProbs_file()
 
@@ -591,10 +592,10 @@ for word in intersection_words:
 same_rate = len(same_tag)/(len(same_tag)+len(diff_tag))
 diff_rate = len(diff_tag)/(len(same_tag)+len(diff_tag))
 
-print('Same : ', len(same_tag), same_rate)
-print('Diff : ', len(diff_tag), diff_rate)
+print(f"Same Tag Count : {len(same_tag)} | Success Rate : {same_rate}")
+print(f"Diff Tag Count : {len(diff_tag)} | Success Rate : {diff_rate}")
 
-
+# find intersection of ca41 tags and TRAIN tags
 ca_intersection_words = [
     word
     for word in ca_words.keys()
@@ -604,25 +605,50 @@ ca_intersection_words = [
 ca_file_same_tag = {}
 ca_file_diff_tag = {}
 
+# find same and different tags of ca41 file
 for word in ca_intersection_words:
     trained_word_tag = comparison_for_word_tag[word]['predicted']
     test_word_tag = ca_words[word]
+
     if trained_word_tag != test_word_tag:
         ca_file_diff_tag[word] = {
             'true': test_word_tag,
             'predicted': trained_word_tag
         }
-        print(
-            f"Word:{word}\nExpected:{trained_word_tag}\nTrue:{test_word_tag}"
-            f"\n***********************************************"
-        )
+        # print(
+        #     f"Word:{word}\nExpected:{trained_word_tag}\nTrue:{test_word_tag}"
+        #     f"\n****************************"
+        # )
     else:
         ca_file_same_tag[word] = test_word_tag
 
-print('Same : ', len(ca_file_same_tag), len(ca_file_same_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)))
-print('Diff : ', len(ca_file_diff_tag), len(ca_file_diff_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)))
+ca_file_same_rate = round(len(ca_file_same_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)), 3)
+ca_file_diff_rate = round(len(ca_file_diff_tag)/(len(ca_file_same_tag)+len(ca_file_diff_tag)), 3)
+
+print(f"Same Tag Count of CA41 : {len(ca_file_same_tag)} | Success Rate : {ca_file_same_rate}")
+print(f"Diff Tag Count of CA41 : {len(ca_file_diff_tag)} | Success Rate : {ca_file_diff_rate}")
 
 
+sonuc_file = open('Sonuc.txt', 'w+')
+# total words count in the ca41 file
+sonuc_file.write(sonuc_file_first_line)
+sonuc_file.write("---------------------------------------\n")
+
+# correct and incorrect POSTag counts
+sonuc_file.write(
+    f"Dogru POSTag Sayisi  : {len(ca_file_same_tag)}\n"
+    f"Dogru POSTag Orani   : {ca_file_same_rate}\n\n"
+    f"Yanlis POSTag Sayisi : {len(ca_file_diff_tag)}\n"
+    f"Yanlis POSTag Orani  : {ca_file_diff_rate}\n"
+)
+sonuc_file.write("---------------------------------------\n")
+print(
+    tabulate(
+        _TEST_initial_probs_list,
+        headers=['Tag', 'P(Tag|<s>)']
+    ),
+    file=TEST_initial_probability_file
+)
 
 
 print('Done')
